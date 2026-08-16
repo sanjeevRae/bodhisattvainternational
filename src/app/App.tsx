@@ -45,11 +45,14 @@ function useWebsiteProtection() {
       const blockedCombo =
         (event.ctrlKey && event.shiftKey && ["i", "j", "c"].includes(key)) ||
         (event.metaKey && event.altKey && ["i", "j", "c"].includes(key)) ||
-        ((event.ctrlKey || event.metaKey) && key === "u");
+        ((event.ctrlKey || event.metaKey) && key === "u") ||
+        (event.metaKey && event.shiftKey && key === "s");
 
       if (event.key === "F12" || blockedCombo) {
         event.preventDefault();
         event.stopPropagation();
+        setContentObscured(true);
+        window.setTimeout(() => setContentObscured(false), 1400);
       }
     };
 

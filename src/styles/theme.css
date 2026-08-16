@@ -168,9 +168,23 @@
     inset: 0;
     z-index: 9999;
     pointer-events: none;
-    background:
-      radial-gradient(circle at 50% 30%, rgba(154, 111, 42, 0.16), transparent 34%),
-      var(--background);
+    background: #000;
+  }
+
+  @media print {
+    body * {
+      visibility: hidden !important;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 2147483647;
+      display: block;
+      background: #000;
+      visibility: visible !important;
+    }
   }
 
   /**
