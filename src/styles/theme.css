@@ -131,6 +131,48 @@
     @apply bg-background text-foreground;
   }
 
+  body,
+  .protected-content {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  select,
+  [contenteditable='true'] {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  img,
+  picture,
+  video {
+    -webkit-user-drag: none;
+    user-drag: none;
+  }
+
+  .protected-content {
+    transition: filter 180ms ease, opacity 180ms ease;
+  }
+
+  .protected-content.is-obscured {
+    filter: blur(18px);
+    opacity: 0.18;
+  }
+
+  .privacy-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(154, 111, 42, 0.16), transparent 34%),
+      var(--background);
+  }
+
   /**
   * Default typography styles for HTML elements (h1-h4, p, label, button, input).
   * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.

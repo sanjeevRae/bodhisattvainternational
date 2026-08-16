@@ -27,6 +27,75 @@ function SectionLabel({ children, light = false }: { children: React.ReactNode; 
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
+function useWebsiteProtection() {
+  const [contentObscured, setContentObscured] = useState(false);
+
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
+    };
+
+    const prevent = (event: Event) => {
+      event.preventDefault();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      const blockedCombo =
+        (event.ctrlKey && event.shiftKey && ["i", "j", "c"].includes(key)) ||
+        (event.metaKey && event.altKey && ["i", "j", "c"].includes(key)) ||
+        ((event.ctrlKey || event.metaKey) && key === "u");
+
+      if (event.key === "F12" || blockedCombo) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    const handleCopyCut = (event: ClipboardEvent) => {
+      if (!isEditableTarget(event.target)) prevent(event);
+    };
+
+    const handleVisibility = () => {
+      setContentObscured(document.hidden);
+    };
+
+    const handleBlur = () => setContentObscured(true);
+    const handleFocus = () => setContentObscured(false);
+    const handlePrintScreen = (event: KeyboardEvent) => {
+      if (event.key === "PrintScreen") {
+        setContentObscured(true);
+        window.setTimeout(() => setContentObscured(false), 1400);
+      }
+    };
+
+    document.addEventListener("contextmenu", prevent);
+    document.addEventListener("dragstart", prevent);
+    document.addEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("keyup", handlePrintScreen, true);
+    document.addEventListener("copy", handleCopyCut);
+    document.addEventListener("cut", handleCopyCut);
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("contextmenu", prevent);
+      document.removeEventListener("dragstart", prevent);
+      document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("keyup", handlePrintScreen, true);
+      document.removeEventListener("copy", handleCopyCut);
+      document.removeEventListener("cut", handleCopyCut);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  return contentObscured;
+}
+
 function Nav({ current, onNav, dark, onToggleDark }: {
   current: Page; onNav: (p: Page) => void; dark: boolean; onToggleDark: () => void;
 }) {
@@ -1025,6 +1094,7 @@ function Footer({ onNav }: { onNav: (p: Page) => void }) {
 export default function App() {
   const [page, setPage] = useState<Page>("home");
   const [dark, setDark] = useState(false);
+  const contentObscured = useWebsiteProtection();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -1034,19 +1104,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Nav current={page} onNav={navigate} dark={dark} onToggleDark={() => setDark((d) => !d)} />
-      <main>
-        <motion.div key={page} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}>
-          {page === "home"       && <HomePage onNav={navigate} />}
-          {page === "museum"     && <MuseumPage onNav={navigate} />}
-          {page === "gallery"    && <GalleryPage />}
-          {page === "shop"       && <GiftShopPage />}
-          {page === "news"       && <NewsPage />}
-          {page === "foundation" && <FoundationPage />}
-          {page === "about"      && <AboutPage />}
-        </motion.div>
-      </main>
-      <Footer onNav={navigate} />
+      <div className={`protected-content ${contentObscured ? "is-obscured" : ""}`}>
+        <Nav current={page} onNav={navigate} dark={dark} onToggleDark={() => setDark((d) => !d)} />
+        <main>
+          <motion.div key={page} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}>
+            {page === "home"       && <HomePage onNav={navigate} />}
+            {page === "museum"     && <MuseumPage onNav={navigate} />}
+            {page === "gallery"    && <GalleryPage />}
+            {page === "shop"       && <GiftShopPage />}
+            {page === "news"       && <NewsPage />}
+            {page === "foundation" && <FoundationPage />}
+            {page === "about"      && <AboutPage />}
+          </motion.div>
+        </main>
+        <Footer onNav={navigate} />
+      </div>
+      {contentObscured && <div className="privacy-screen" aria-hidden="true" />}
     </div>
   );
 }
